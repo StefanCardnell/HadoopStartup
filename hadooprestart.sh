@@ -3,25 +3,21 @@
 # Stops all processes, formats namenodes, deletes temporary directories
 # across nodes and starts processes agian
 
-echo "#####################################"
-echo "Stopping all processes"
+echo -e "#####################################\nStopping all processes"
 stop-all.sh
 
-echo "#####################################"
-echo "Deleting filesystems across nodes"
+echo -e "#####################################\nDeleting filesystems across nodes"
 
 for node in node1 node2 node3 node4;
 do
     ssh pi@$node "sudo rm -rf /hdfs/tmp/*";
 done
 
-echo "#####################################"
-echo "Reformatting Namenode"
+echo -e "#####################################\nReformatting Namenode"
 
 hadoop namenode -format
 
-echo "#####################################"
-echo "Starting Hadoop services"
+echo -e "#####################################\nStarting Hadoop services"
 
 if start-dfs.sh && start-mapred.sh;
 then
