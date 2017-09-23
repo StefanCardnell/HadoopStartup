@@ -13,15 +13,22 @@ fi
 
 filename=`basename $1`
 
-echo -e "##################\nDeleting existing file"
-hadoop dfs -rmr /$filename
+echo -e "##################\nChecking existence of input directory."
+if `hadoop dfs -ls / | grep -q "/input"`
+then
+    echo -e "##################\nInput directory exists. Deleting any existing file"
+    hadoop dfs -rmr /input/$filename 2>/dev/null
+else
+    echo -e "##################\nInput directory does not exist. Creating..."
+    hadoop dfs -mkdir /input
+fi
 
 echo -e "##################\nCopying file across"
-hadoop dfs -copyFromLocal $1 /$filename || exit 1
+hadoop dfs -copyFromLocal $1 /input/$filename || exit 1
 
 echo -e "##################\nObtaining balancer threshold"
 
-blocksize=`hadoop dfs -stat %o /$filename` # Obtain the blocksize
+blocksize=`hadoop dfs -stat %o /input/$filename` # Obtain the blocksize
 filesize=`df -B1 / | tail -n 1 | awk '{print $2;}'` # Obtain the partition's total size
 
 percentage=`echo "scale=20;$blocksize*50/$filesize" | bc`
@@ -34,4 +41,4 @@ hadoop balancer -threshold $percentage
 
 echo -e "###################\nBalancer finished. Outputting new distribution..."
 
-hadoop fsck /$filename -files -blocks -racks
+hadoop fsck /input/$filename -files -blocks -racks
